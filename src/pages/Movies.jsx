@@ -1,24 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Grid, List, Play } from 'lucide-react';
+import { Filter, Grid, List, Play, Loader } from 'lucide-react';
 import { getPopularMovies, getTopRatedMovies, getNowPlayingMovies, getMovieGenres, getMoviesByGenre } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 const Movies = () => {
   const [movies, setMovies] = useState([]);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedCategory, setSelectedCategory] = useState('popular');
   const [selectedGenre, setSelectedGenre] = useState('');
   const [viewMode, setViewMode] = useState('grid');
+  const [hasMore, setHasMore] = useState(true);
 
   const categories = [
     { id: 'popular', name: 'الشائعة', fetch: getPopularMovies },
     { id: 'top_rated', name: 'الأعلى تقييماً', fetch: getTopRatedMovies },
     { id: 'now_playing', name: 'الجديدة', fetch: getNowPlayingMovies }
   ];
+
+  // إعداد التصفح اللانهائي
+  const fetchMoreMovies = async () => {
+    if (currentPage < totalPages) {
+      await fetchMovies(false);
+    }
+  };
+
+  const [isFetching] = useInfiniteScroll(fetchMoreMovies, currentPage < totalPages);
 
   useEffect(() => {
     fetchGenres();
@@ -42,8 +52,6 @@ const Movies = () => {
       if (reset) {
         setLoading(true);
         setCurrentPage(1);
-      } else {
-        setLoadingMore(true);
       }
 
       const page = reset ? 1 : currentPage + 1;
@@ -64,19 +72,15 @@ const Movies = () => {
 
       setTotalPages(data.total_pages || 1);
       setCurrentPage(page);
+      setHasMore(page < (data.total_pages || 1));
     } catch (error) {
       console.error('خطأ في جلب الأفلام:', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages && !loadingMore) {
-      fetchMovies(false);
-    }
-  };
+
 
   const handleCategoryChange = (categoryId) => {
     setSelectedCategory(categoryId);
@@ -201,23 +205,13 @@ const Movies = () => {
           ))}
         </div>
 
-        {/* Load More Button */}
-        {currentPage < totalPages && (
-          <div className="text-center">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="bg-netflix-red hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMore ? (
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>جاري التحميل...</span>
-                </div>
-              ) : (
-                'تحميل المزيد'
-              )}
-            </button>
+        {/* Infinite Scroll Loading Indicator */}
+        {isFetching && hasMore && (
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
+              <Loader className="animate-spin h-6 w-6 text-netflix-red" />
+              <span className="text-white text-lg">جاري تحميل المزيد من الأفلام...</span>
+            </div>
           </div>
         )}
 

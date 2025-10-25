@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Play, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPopularMovies, getPopularTVShows, getTopRatedMovies, getNowPlayingMovies, getImageUrl, getBackdropUrl } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
+import HeroSection from '../components/HeroSection';
 
 const Home = () => {
   const [heroMovie, setHeroMovie] = useState(null);
@@ -114,68 +115,7 @@ const Home = () => {
     <div className="min-h-screen bg-netflix-black">
       {/* Hero Section */}
       {heroMovie && (
-        <div className="relative h-screen">
-          {/* Background Image */}
-          <div className="absolute inset-0">
-            <img
-              src={getBackdropUrl(heroMovie.backdrop_path)}
-              alt={heroMovie.title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-black via-black/50 to-transparent"></div>
-            <div className="absolute inset-0 bg-gradient-to-t from-netflix-black via-transparent to-transparent"></div>
-          </div>
-
-          {/* Hero Content */}
-          <div className="relative z-10 flex items-center h-full px-4 md:px-8 lg:px-16">
-            <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-                {heroMovie.title}
-              </h1>
-              
-              {heroMovie.overview && (
-                <p className="text-lg md:text-xl text-netflix-lightGray mb-6 line-clamp-3">
-                  {heroMovie.overview}
-                </p>
-              )}
-
-              <div className="flex items-center space-x-4 space-x-reverse mb-6">
-                {heroMovie.vote_average > 0 && (
-                  <div className="flex items-center text-yellow-400">
-                    <span className="text-lg font-semibold">
-                      {heroMovie.vote_average.toFixed(1)}
-                    </span>
-                    <span className="text-sm text-netflix-lightGray mr-1">/10</span>
-                  </div>
-                )}
-                
-                {heroMovie.release_date && (
-                  <span className="text-netflix-lightGray">
-                    {new Date(heroMovie.release_date).getFullYear()}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex space-x-4 space-x-reverse">
-                <Link
-                  to={`/movie/${heroMovie.id}`}
-                  className="bg-white hover:bg-gray-200 text-black font-bold py-3 px-8 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
-                >
-                  <Play size={20} fill="currentColor" />
-                  <span>تشغيل</span>
-                </Link>
-                
-                <Link
-                  to={`/movie/${heroMovie.id}`}
-                  className="bg-gray-600/80 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-md flex items-center space-x-2 space-x-reverse transition-colors"
-                >
-                  <Info size={20} />
-                  <span>معلومات أكثر</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <HeroSection item={heroMovie} type="movie" />
       )}
 
       {/* Content Rows */}

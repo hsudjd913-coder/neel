@@ -1,17 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Filter, Grid, List, Tv } from 'lucide-react';
+import { Filter, Grid, List, Tv, Loader } from 'lucide-react';
 import { getPopularTVShows, getTVGenres, getTVShowsByGenre } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
+import HeroSection from '../components/HeroSection';
 
 const TVShows = () => {
   const [tvShows, setTVShows] = useState([]);
+  const [heroShow, setHeroShow] = useState(null);
   const [genres, setGenres] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedGenre, setSelectedGenre] = useState('');
   const [viewMode, setViewMode] = useState('grid');
+  const [hasMore, setHasMore] = useState(true);
+
+  // إعداد التصفح اللانهائي
+  const fetchMoreTVShows = async () => {
+    if (currentPage < totalPages) {
+      await fetchTVShows(false);
+    }
+  };
+
+  const [isFetching] = useInfiniteScroll(fetchMoreTVShows, currentPage < totalPages);
 
   useEffect(() => {
     fetchGenres();
@@ -35,8 +47,6 @@ const TVShows = () => {
       if (reset) {
         setLoading(true);
         setCurrentPage(1);
-      } else {
-        setLoadingMore(true);
       }
 
       const page = reset ? 1 : currentPage + 1;
@@ -50,25 +60,25 @@ const TVShows = () => {
 
       if (reset) {
         setTVShows(data.results || []);
+        // تعيين أول مسلسل كمسلسل مميز
+        if (data.results && data.results.length > 0 && !selectedGenre) {
+          setHeroShow(data.results[0]);
+        }
       } else {
         setTVShows(prev => [...prev, ...(data.results || [])]);
       }
 
       setTotalPages(data.total_pages || 1);
       setCurrentPage(page);
+      setHasMore(page < (data.total_pages || 1));
     } catch (error) {
       console.error('خطأ في جلب المسلسلات:', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages && !loadingMore) {
-      fetchTVShows(false);
-    }
-  };
+
 
   const handleGenreChange = (genreId) => {
     setSelectedGenre(genreId);
@@ -86,15 +96,21 @@ const TVShows = () => {
   }
 
   return (
-    <div className="min-h-screen bg-netflix-black py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">المسلسلات</h1>
-          <p className="text-netflix-lightGray text-lg">
-            اكتشف أفضل المسلسلات من جميع أنحاء العالم
-          </p>
-        </div>
+    <div className="min-h-screen bg-netflix-black">
+      {/* Hero Section */}
+      {heroShow && !selectedGenre && (
+        <HeroSection item={heroShow} type="tv" />
+      )}
+
+      <div className={`${heroShow && !selectedGenre ? 'relative z-20 -mt-32' : ''} py-8`}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-white mb-4">المسلسلات</h1>
+            <p className="text-netflix-lightGray text-lg">
+              اكتشف أفضل المسلسلات من جميع أنحاء العالم
+            </p>
+          </div>
 
         {/* Filters */}
         <div className="mb-8 space-y-4">
@@ -169,23 +185,13 @@ const TVShows = () => {
           ))}
         </div>
 
-        {/* Load More Button */}
-        {currentPage < totalPages && (
-          <div className="text-center">
-            <button
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-              className="bg-netflix-red hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMore ? (
-                <div className="flex items-center space-x-2 space-x-reverse">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>جاري التحميل...</span>
-                </div>
-              ) : (
-                'تحميل المزيد'
-              )}
-            </button>
+        {/* Infinite Scroll Loading Indicator */}
+        {isFetching && hasMore && (
+          <div className="text-center py-8">
+            <div className="flex items-center justify-center space-x-2 space-x-reverse">
+              <Loader className="animate-spin h-6 w-6 text-netflix-red" />
+              <span className="text-white text-lg">جاري تحميل المزيد من المسلسلات...</span>
+            </div>
           </div>
         )}
 
@@ -199,6 +205,7 @@ const TVShows = () => {
             </p>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

@@ -169,4 +169,35 @@ export const getBackdropUrl = (path) => {
   return `${BACKDROP_BASE_URL}${path}`;
 };
 
+// دوال جلب الفيديوهات والتريلرات
+export const getMovieVideos = async (movieId) => {
+  try {
+    const response = await tmdbApi.get(`/movie/${movieId}/videos?language=ar`);
+    if (response.data.results.length === 0) {
+      // إذا لم توجد فيديوهات بالعربية، جرب الإنجليزية
+      const fallbackResponse = await tmdbApi.get(`/movie/${movieId}/videos?language=en-US`);
+      return fallbackResponse.data.results;
+    }
+    return response.data.results;
+  } catch (error) {
+    console.error('خطأ في جلب فيديوهات الفيلم:', error);
+    return [];
+  }
+};
+
+export const getTVShowVideos = async (tvId) => {
+  try {
+    const response = await tmdbApi.get(`/tv/${tvId}/videos?language=ar`);
+    if (response.data.results.length === 0) {
+      // إذا لم توجد فيديوهات بالعربية، جرب الإنجليزية
+      const fallbackResponse = await tmdbApi.get(`/tv/${tvId}/videos?language=en-US`);
+      return fallbackResponse.data.results;
+    }
+    return response.data.results;
+  } catch (error) {
+    console.error('خطأ في جلب فيديوهات المسلسل:', error);
+    return [];
+  }
+};
+
 export { IMAGE_BASE_URL, BACKDROP_BASE_URL };

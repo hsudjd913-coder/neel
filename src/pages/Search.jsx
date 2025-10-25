@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search as SearchIcon, Filter, User, Play } from 'lucide-react';
+import { Search as SearchIcon, Filter, User, Play, Loader } from 'lucide-react';
 import { searchMulti } from '../services/tmdb';
 import MovieCard from '../components/MovieCard';
+import useInfiniteScroll from '../hooks/useInfiniteScroll';
 
 const Search = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalResults, setTotalResults] = useState(0);
   const [filter, setFilter] = useState('all'); // all, movie, tv, person
+  const [hasMore, setHasMore] = useState(true);
+
+  // إعداد التصفح اللانهائي
+  const fetchMoreResults = async () => {
+    if (currentPage < totalPages && query.trim()) {
+      await performSearch(query, false);
+    }
+  };
+
+  const [isFetching] = useInfiniteScroll(fetchMoreResults, currentPage < totalPages && query.trim());
 
   useEffect(() => {
     const searchQuery = searchParams.get('q');
@@ -30,8 +40,6 @@ const Search = () => {
       if (reset) {
         setLoading(true);
         setCurrentPage(1);
-      } else {
-        setLoadingMore(true);
       }
 
       const page = reset ? 1 : currentPage + 1;
@@ -53,11 +61,11 @@ const Search = () => {
       setTotalPages(data.total_pages || 1);
       setTotalResults(data.total_results || 0);
       setCurrentPage(page);
+      setHasMore(page < (data.total_pages || 1));
     } catch (error) {
       console.error('خطأ في البحث:', error);
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   };
 
@@ -69,11 +77,7 @@ const Search = () => {
     }
   };
 
-  const handleLoadMore = () => {
-    if (currentPage < totalPages && !loadingMore) {
-      performSearch(query, false);
-    }
-  };
+
 
   const handleFilterChange = (newFilter) => {
     setFilter(newFilter);
@@ -204,23 +208,13 @@ const Search = () => {
               })}
             </div>
 
-            {/* Load More Button */}
-            {currentPage < totalPages && (
-              <div className="text-center">
-                <button
-                  onClick={handleLoadMore}
-                  disabled={loadingMore}
-                  className="bg-netflix-red hover:bg-red-700 text-white font-semibold py-3 px-8 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loadingMore ? (
-                    <div className="flex items-center space-x-2 space-x-reverse">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      <span>جاري التحميل...</span>
-                    </div>
-                  ) : (
-                    'تحميل المزيد'
-                  )}
-                </button>
+            {/* Infinite Scroll Loading Indicator */}
+            {isFetching && hasMore && (
+              <div className="text-center py-8">
+                <div className="flex items-center justify-center space-x-2 space-x-reverse">
+                  <Loader className="animate-spin h-6 w-6 text-netflix-red" />
+                  <span className="text-white text-lg">جاري تحميل المزيد من النتائج...</span>
+                </div>
               </div>
             )}
           </>
