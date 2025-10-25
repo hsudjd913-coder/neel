@@ -103,6 +103,71 @@ src/
 └── main.jsx           # نقطة الدخول
 ```
 
+## النشر على Netlify
+
+### الطريقة الأولى: الربط المباشر مع GitHub (الأسهل)
+
+1. **إنشاء حساب على Netlify**
+   - اذهب إلى [netlify.com](https://netlify.com)
+   - سجل دخول باستخدام حساب GitHub
+
+2. **ربط المشروع**
+   - اضغط على "New site from Git"
+   - اختر "GitHub"
+   - ابحث عن مستودع `neel`
+   - اختر الفرع `feature/netflix-clone-app`
+
+3. **إعدادات البناء** (تلقائية من netlify.toml)
+   ```
+   Build command: npm run build
+   Publish directory: dist
+   ```
+
+4. **متغيرات البيئة** (اختيارية - موجودة في netlify.toml)
+   - يمكنك إضافة متغيرات Firebase الخاصة بك في إعدادات الموقع
+
+### الطريقة الثانية: الرفع اليدوي
+
+1. **بناء المشروع محلياً**
+   ```bash
+   npm run build
+   ```
+
+2. **رفع مجلد dist**
+   - اذهب إلى [netlify.com](https://netlify.com)
+   - اسحب وأفلت مجلد `dist` على الصفحة
+
+### الطريقة الثالثة: Netlify CLI
+
+1. **تثبيت Netlify CLI**
+   ```bash
+   npm install -g netlify-cli
+   ```
+
+2. **تسجيل الدخول**
+   ```bash
+   netlify login
+   ```
+
+3. **النشر**
+   ```bash
+   netlify deploy --prod --dir=dist
+   ```
+
+## إعداد Firebase للإنتاج
+
+1. إنشاء مشروع Firebase جديد
+2. تفعيل Authentication مع Google
+3. تفعيل Firestore Database
+4. إضافة domain الخاص بـ Netlify إلى Authorized domains
+5. تحديث متغيرات البيئة بالقيم الصحيحة
+
+## الملفات المهمة للنشر
+
+- `netlify.toml` - إعدادات Netlify
+- `.env.production` - متغيرات البيئة للإنتاج
+- `dist/` - ملفات البناء (يتم إنشاؤها تلقائياً)
+
 ## المساهمة
 
 هذا المشروع لأغراض تعليمية فقط. يمكنك المساهمة بـ:
